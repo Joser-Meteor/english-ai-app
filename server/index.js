@@ -2,18 +2,54 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const publicDir = path.join(__dirname, 'public')
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-// 静态文件服务 - 托管前端构建产物
-app.use(express.static(path.join(__dirname, 'public')))
+// 手动静态文件服务（避免 Express 5 express.static / res.sendFile Promise 问题）
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.json': 'application/json',
+  '.webmanifest': 'application/manifest+json',
+}
+
+function serveStatic(req, res, next) {
+  if (req.path.startsWith('/api')) return next()
+  let filePath = path.join(publicDir, req.path === '/' ? 'index.html' : req.path)
+  // 如果路径不带扩展名，默认返回 index.html（SPA 回退）
+  if (!path.extname(filePath)) {
+    filePath = path.join(publicDir, 'index.html')
+  }
+  try {
+    const data = fs.readFileSync(filePath)
+    const ext = path.extname(filePath)
+    res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream')
+    res.end(data)
+  } catch {
+    // 文件不存在，回退到 index.html
+    try {
+      const data = fs.readFileSync(path.join(publicDir, 'index.html'))
+      res.setHeader('Content-Type', 'text/html; charset=utf-8')
+      res.end(data)
+    } catch {
+      next()
+    }
+  }
+}
+
+app.use(serveStatic)
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
@@ -263,13 +299,6 @@ app.delete('/api/knowledge/:id', async (req, res) => {
   } catch (err) {
     console.error('Delete knowledge error:', err)
     res.status(500).json({ error: err.message })
-  }
-})
-
-// SPA 回退 - 所有非 API 路由返回 index.html
-app.get('/{*path}', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'))
   }
 })
 
