@@ -1,2 +1,5 @@
 [start]
 cmd = "node index.js"
+
+[build]
+cmd = "npm install"

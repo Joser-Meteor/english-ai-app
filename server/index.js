@@ -1,67 +1,11 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
-import path from 'path'
-import fs from 'fs'
 import { createClient } from '@supabase/supabase-js'
-
-// 使用 cwd，在 Railway 环境中最可靠
-const publicDir = path.join(process.cwd(), 'public')
-console.log('Public directory:', publicDir)
-console.log('Public exists:', fs.existsSync(publicDir))
 
 const app = express()
 app.use(cors())
 app.use(express.json())
-
-// 全局错误捕获便于调试
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err.message, err.stack)
-})
-process.on('unhandledRejection', (reason) => {
-  console.error('UNHANDLED REJECTION:', reason)
-})
-
-// 手动静态文件服务 - 同时处理 SPA 回退
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.json': 'application/json',
-  '.webmanifest': 'application/manifest+json',
-}
-
-app.use((req, res, next) => {
-  // API 路由交给后面的 handler
-  if (req.path.startsWith('/api')) return next()
-
-  const hasExt = path.extname(req.path)
-  let filePath
-  if (hasExt) {
-    filePath = path.join(publicDir, req.path)
-  } else {
-    // 无扩展名 → SPA 回退到 index.html
-    filePath = path.join(publicDir, 'index.html')
-  }
-
-  try {
-    const data = fs.readFileSync(filePath)
-    const ext = path.extname(filePath)
-    res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream')
-    res.end(data)
-  } catch {
-    // 文件不存在，回退到 index.html
-    try {
-      const data = fs.readFileSync(path.join(publicDir, 'index.html'))
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(data)
-    } catch {
-      next()
-    }
-  }
-})
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
@@ -70,6 +14,9 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+/**
+ * 呼叫 DeepSeek API
+ */
 async function callDeepSeek(messages, stream = false) {
   const res = await fetch(`${DEEPSEEK_BASE_URL}/v1/chat/completions`, {
     method: 'POST',
@@ -94,6 +41,10 @@ async function callDeepSeek(messages, stream = false) {
   return res
 }
 
+/**
+ * POST /api/chat
+ * 流式输出 AI 回复
+ */
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body
@@ -110,6 +61,7 @@ app.post('/api/chat', async (req, res) => {
 5. 回答结构清晰，使用Markdown格式组织内容（加粗用**文字**，表格用标准markdown表格，列表用-或1.）方便后续整理成学习笔记`
     }
 
+    // 设置 SSE 响应头
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
@@ -155,6 +107,10 @@ app.post('/api/chat', async (req, res) => {
   }
 })
 
+/**
+ * POST /api/summarize
+ * 将对话总结为知识点
+ */
 app.post('/api/summarize', async (req, res) => {
   try {
     const { messages } = req.body
@@ -187,6 +143,7 @@ app.post('/api/summarize', async (req, res) => {
     const data = await response.json()
     const summary = data.choices[0].message.content
 
+    // 提取标题（**标题**：后面的内容）
     const titleMatch = summary.match(/\*\*标题\*\*[：:]\s*(.+)/)
     const title = titleMatch ? titleMatch[1].trim() : '未命名知识点'
 
@@ -197,6 +154,10 @@ app.post('/api/summarize', async (req, res) => {
   }
 })
 
+/**
+ * POST /api/conversations
+ * 保存对话记录
+ */
 app.post('/api/conversations', async (req, res) => {
   try {
     const { title, messages } = req.body
@@ -228,6 +189,10 @@ app.post('/api/conversations', async (req, res) => {
   }
 })
 
+/**
+ * POST /api/knowledge
+ * 保存知识点
+ */
 app.post('/api/knowledge', async (req, res) => {
   try {
     const { conversation_id, title, summary, user_notes, category_id } = req.body
@@ -253,6 +218,10 @@ app.post('/api/knowledge', async (req, res) => {
   }
 })
 
+/**
+ * GET /api/knowledge
+ * 获取所有知识点（时间线模式）
+ */
 app.get('/api/knowledge', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -269,6 +238,10 @@ app.get('/api/knowledge', async (req, res) => {
   }
 })
 
+/**
+ * DELETE /api/knowledge/:id
+ * 删除知识点
+ */
 app.delete('/api/knowledge/:id', async (req, res) => {
   try {
     const { error } = await supabase
@@ -287,5 +260,11 @@ app.delete('/api/knowledge/:id', async (req, res) => {
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend started on port ${PORT}`)
+  console.log(`后端服务已启动: http://localhost:${PORT}`)
+  if (!DEEPSEEK_API_KEY || DEEPSEEK_API_KEY.includes('填在这里')) {
+    console.warn('警告: 请在 server/.env 中填写 DEEPSEEK_API_KEY')
+  }
+  if (!SUPABASE_URL || SUPABASE_URL.includes('填在这里')) {
+    console.warn('警告: 请在 server/.env 中填写 SUPABASE_URL 和 SUPABASE_SERVICE_KEY')
+  }
 })
