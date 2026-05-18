@@ -1,4 +1,4 @@
-import http from 'http'
+import http from 'node:http'
 
 const PORT = process.env.PORT || 3001
 
