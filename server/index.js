@@ -258,6 +258,10 @@ app.delete('/api/knowledge/:id', async (req, res) => {
   }
 })
 
+app.get('/', (req, res) => {
+  res.end('OK')
+})
+
 const PORT = process.env.PORT || 3001
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`后端服务已启动: http://localhost:${PORT}`)
