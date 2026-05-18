@@ -267,7 +267,7 @@ app.delete('/api/knowledge/:id', async (req, res) => {
 })
 
 // SPA 回退 - 所有非 API 路由返回 index.html
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'))
   }
