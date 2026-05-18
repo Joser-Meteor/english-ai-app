@@ -1,11 +1,19 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+// 静态文件服务 - 托管前端构建产物
+app.use(express.static(path.join(__dirname, 'public')))
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
@@ -255,6 +263,13 @@ app.delete('/api/knowledge/:id', async (req, res) => {
   } catch (err) {
     console.error('Delete knowledge error:', err)
     res.status(500).json({ error: err.message })
+  }
+})
+
+// SPA 回退 - 所有非 API 路由返回 index.html
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
   }
 })
 
