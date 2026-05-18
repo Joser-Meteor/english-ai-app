@@ -3,16 +3,24 @@ import express from 'express'
 import cors from 'cors'
 import path from 'path'
 import fs from 'fs'
-import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const publicDir = path.join(__dirname, 'public')
+// 使用 cwd，在 Railway 环境中最可靠
+const publicDir = path.join(process.cwd(), 'public')
+console.log('Public directory:', publicDir)
+console.log('Public exists:', fs.existsSync(publicDir))
 
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+// 全局错误捕获便于调试
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err.message, err.stack)
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason)
+})
 
 // 手动静态文件服务 - 同时处理 SPA 回退
 const MIME = {
