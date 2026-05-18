@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/Git/english-ai-app/sw.js', { scope: '/Git/english-ai-app/' })})}
