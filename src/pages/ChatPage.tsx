@@ -22,12 +22,6 @@ export default function ChatPage() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 80
   }
 
-  const scrollToBottom = (force = false) => {
-    if (force || !userScrolledUpRef.current) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   const handleScroll = () => {
     userScrolledUpRef.current = !isNearBottom()
   }
@@ -38,20 +32,20 @@ export default function ChatPage() {
     setMessages([...messages, { role: 'separator', content: `📌 题目 ${next}` }])
   }
 
-  // 发送新消息时强制滚到底
+  // 只在用户发了新消息时立即滚到底
   useEffect(() => {
     const lastMsg = messages[messages.length - 1]
     if (lastMsg?.role === 'user') {
       userScrolledUpRef.current = false
-      scrollToBottom(true)
-    } else {
-      scrollToBottom()
+      chatEndRef.current?.scrollIntoView({ behavior: 'auto' })
     }
   }, [messages])
 
-  // streaming 时根据用户位置决定是否滚动
+  // streaming 时只在用户本来就待在底部时才跟随
   useEffect(() => {
-    if (streamingContent) scrollToBottom()
+    if (streamingContent && !userScrolledUpRef.current) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'auto' })
+    }
   }, [streamingContent])
 
   const sendMessage = async () => {
