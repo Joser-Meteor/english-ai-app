@@ -148,7 +148,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)]">
+    <div className="flex flex-col min-h-0 flex-1">
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-gray-200 mb-4 p-4">
         {messages.length === 0 && !streamingContent ? (
@@ -191,7 +191,7 @@ export default function ChatPage() {
 
       {/* 输入区 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <textarea
             className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             rows={2}
@@ -201,16 +201,16 @@ export default function ChatPage() {
             onKeyDown={handleKeyDown}
             disabled={loading}
           />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row sm:flex-col gap-2">
             <button
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               onClick={sendMessage}
               disabled={loading || !input.trim()}
             >
               发送
             </button>
             <button
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+              className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap"
               onClick={startSave}
               disabled={saving || messages.length === 0 || loading}
             >

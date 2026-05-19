@@ -5,14 +5,14 @@ export default function Layout() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* 顶部导航 */}
       <header className="bg-indigo-600 text-white shadow-md">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-4 h-14">
-          <h1 className="text-lg font-bold">英语知识点AI助手</h1>
-          <nav className="flex gap-1 text-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between px-3 sm:px-4 h-14 gap-2">
+          <h1 className="text-base sm:text-lg font-bold whitespace-nowrap">英语AI助手</h1>
+          <nav className="flex gap-0.5 sm:gap-1 text-xs sm:text-sm">
             <NavLink
               to="/"
               end
               className={({ isActive }) =>
-                `px-3 py-1.5 rounded-md transition-colors ${
+                `px-1.5 sm:px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
                   isActive ? 'bg-indigo-700' : 'hover:bg-indigo-500'
                 }`
               }
@@ -22,7 +22,7 @@ export default function Layout() {
             <NavLink
               to="/knowledge"
               className={({ isActive }) =>
-                `px-3 py-1.5 rounded-md transition-colors ${
+                `px-1.5 sm:px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
                   isActive ? 'bg-indigo-700' : 'hover:bg-indigo-500'
                 }`
               }
@@ -32,7 +32,7 @@ export default function Layout() {
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `px-3 py-1.5 rounded-md transition-colors ${
+                `px-1.5 sm:px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
                   isActive ? 'bg-indigo-700' : 'hover:bg-indigo-500'
                 }`
               }
