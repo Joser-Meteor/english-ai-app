@@ -268,6 +268,6 @@ app.delete('/api/knowledge/:id', async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Backend + Static on port ${PORT}`)
 })
