@@ -134,7 +134,7 @@ export default function KnowledgePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto h-full overflow-y-auto">
       <div className="flex gap-2 mb-4">
         <input
           className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm"

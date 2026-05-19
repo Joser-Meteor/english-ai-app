@@ -193,7 +193,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
+    <div className="flex flex-col h-full">
       {/* 消息列表 */}
       <div ref={msgListRef} onScroll={handleScroll} className="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-gray-200 mb-2 p-4">
         {messages.length === 0 && !streamingContent ? (
@@ -244,7 +244,7 @@ export default function ChatPage() {
       </div>
 
       {/* 输入区 */}
-      <div className="sticky bottom-0 z-10 bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-3">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-3 flex-shrink-0">
         <div className="flex flex-col sm:flex-row gap-2">
           <textarea
             className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
