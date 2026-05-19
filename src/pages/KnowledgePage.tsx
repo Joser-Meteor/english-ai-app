@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { marked } from 'marked'
@@ -22,12 +22,13 @@ export default function KnowledgePage() {
 
   const fetchItems = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('knowledge_items')
-      .select('*, categories(name)')
-      .order('created_at', { ascending: false })
-
-    setItems((data || []) as KnowledgeItem[])
+    try {
+      const res = await apiFetch('/knowledge')
+      const data = await res.json()
+      setItems((data || []) as KnowledgeItem[])
+    } catch (err) {
+      console.error('获取知识点失败:', err)
+    }
     setLoading(false)
   }
 
@@ -37,7 +38,7 @@ export default function KnowledgePage() {
 
   const deleteItem = async (id: string) => {
     if (!confirm('确定要删除这个知识点吗？')) return
-    await supabase.from('knowledge_items').delete().eq('id', id)
+    await apiFetch(`/knowledge/${id}`, { method: 'DELETE' })
     setItems(items.filter((item) => item.id !== id))
   }
 
