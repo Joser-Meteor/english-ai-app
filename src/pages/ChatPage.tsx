@@ -16,11 +16,41 @@ export default function ChatPage() {
   const [userNotes, setUserNotes] = useState('')
   const [streamingContent, setStreamingContent] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const msgListRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const userScrolledUpRef = useRef(false)
 
+  const isNearBottom = () => {
+    const el = msgListRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }
+
+  const scrollToBottom = (force = false) => {
+    if (force || !userScrolledUpRef.current) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const handleScroll = () => {
+    userScrolledUpRef.current = !isNearBottom()
+  }
+
+  // 发送新消息时强制滚到底
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingContent])
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg?.role === 'user') {
+      userScrolledUpRef.current = false
+      scrollToBottom(true)
+    } else {
+      scrollToBottom()
+    }
+  }, [messages])
+
+  // streaming 时根据用户位置决定是否滚动
+  useEffect(() => {
+    if (streamingContent) scrollToBottom()
+  }, [streamingContent])
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
@@ -150,7 +180,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col min-h-0 flex-1">
       {/* 消息列表 */}
-      <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-gray-200 mb-4 p-4">
+      <div ref={msgListRef} onScroll={handleScroll} className="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-gray-200 mb-4 p-4">
         {messages.length === 0 && !streamingContent ? (
           <div className="flex items-center justify-center h-full text-gray-400">
             <div className="text-center">
