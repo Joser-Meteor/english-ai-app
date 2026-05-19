@@ -11,6 +11,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      workbox: {
+        navigateFallback: null,
+        globPatterns: ['**/*.{js,css,svg,png,webmanifest}'],
+      },
       manifest: {
         name: '英语知识点AI助手',
         short_name: '英语AI助手',
