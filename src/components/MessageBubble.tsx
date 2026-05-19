@@ -2,11 +2,23 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 interface Props {
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'separator'
   content: string
 }
 
 export default function MessageBubble({ role, content }: Props) {
+  if (role === 'separator') {
+    return (
+      <div className="flex items-center gap-2 my-4">
+        <div className="flex-1 border-t border-indigo-200" />
+        <span className="text-xs text-indigo-500 font-medium px-2.5 py-0.5 bg-indigo-50 rounded-full whitespace-nowrap">
+          {content}
+        </span>
+        <div className="flex-1 border-t border-indigo-200" />
+      </div>
+    )
+  }
+
   const isUser = role === 'user'
 
   return (
