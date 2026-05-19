@@ -11,19 +11,19 @@ export default function ChatPage() {
   const [streamingContent, setStreamingContent] = useState('')
   const [topicCount, setTopicCount] = useState(0)
   const [topicSummaries, setTopicSummaries] = useState<{ label: string; title: string; summary: string; userNotes: string }[]>([])
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const msgListRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const userScrolledUpRef = useRef(false)
 
-  const isNearBottom = () => {
-    const el = msgListRef.current
-    if (!el) return true
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  const jumpToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'auto' })
   }
 
   const handleScroll = () => {
-    userScrolledUpRef.current = !isNearBottom()
+    const el = msgListRef.current
+    if (!el) return
+    setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 200)
   }
 
   const newTopic = () => {
@@ -32,21 +32,13 @@ export default function ChatPage() {
     setMessages([...messages, { role: 'separator', content: `📌 题目 ${next}` }])
   }
 
-  // 只在用户发了新消息时立即滚到底
+  // 只在用户发了新消息时滚到底
   useEffect(() => {
     const lastMsg = messages[messages.length - 1]
     if (lastMsg?.role === 'user') {
-      userScrolledUpRef.current = false
       chatEndRef.current?.scrollIntoView({ behavior: 'auto' })
     }
   }, [messages])
-
-  // streaming 时只在用户本来就待在底部时才跟随
-  useEffect(() => {
-    if (streamingContent && !userScrolledUpRef.current) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'auto' })
-    }
-  }, [streamingContent])
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
@@ -240,6 +232,15 @@ export default function ChatPage() {
           </div>
         )}
         <div ref={chatEndRef} />
+        {showScrollBtn && (
+          <button
+            className="sticky bottom-2 float-right z-10 w-9 h-9 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:bg-indigo-700 transition-colors"
+            onClick={jumpToBottom}
+            title="跳到底部"
+          >
+            ↓
+          </button>
+        )}
       </div>
 
       {/* 输入区 */}
