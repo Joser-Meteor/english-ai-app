@@ -44,7 +44,7 @@ export default function Layout() {
       </header>
 
       {/* 主内容 */}
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-4 pb-0">
         <Outlet />
       </main>
     </div>
