@@ -9,8 +9,10 @@ export default function ChatPage() {
   const [saving, setSaving] = useState(false)
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
-  const [topicCount, setTopicCount] = useState(0)
-  const [topicSummaries, setTopicSummaries] = useState<{ label: string; title: string; summary: string; userNotes: string }[]>([])
+  const [aiTitle, setAiTitle] = useState('')
+  const [aiSummary, setAiSummary] = useState('')
+  const [editingSummary, setEditingSummary] = useState('')
+  const [userNotes, setUserNotes] = useState('')
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const msgListRef = useRef<HTMLDivElement>(null)
@@ -26,13 +28,6 @@ export default function ChatPage() {
     setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 200)
   }
 
-  const newTopic = () => {
-    const next = topicCount + 1
-    setTopicCount(next)
-    setMessages([...messages, { role: 'separator', content: `📌 题目 ${next}` }])
-  }
-
-  // 只在用户发了新消息时滚到底
   useEffect(() => {
     const lastMsg = messages[messages.length - 1]
     if (lastMsg?.role === 'user') {
@@ -114,77 +109,54 @@ export default function ChatPage() {
     }
   }
 
-  const splitByTopics = (msgs: typeof messages) => {
-    const topics: { label: string; msgs: typeof messages }[] = []
-    let current: { label: string; msgs: typeof messages } = { label: '默认题目', msgs: [] }
-    for (const m of msgs) {
-      if (m.role === 'separator') {
-        if (current.msgs.length > 0) topics.push(current)
-        current = { label: m.content, msgs: [] }
-      } else {
-        current.msgs.push(m)
-      }
-    }
-    if (current.msgs.length > 0) topics.push(current)
-    return topics
-  }
-
-  const startSave = () => {
+  const startSave = async () => {
     if (messages.length === 0) return
-    const topics = splitByTopics(messages)
-    if (topics.length === 0) return
-    setTopicSummaries(topics.map(t => ({ label: t.label, title: '', summary: '', userNotes: '' })))
-    setShowSaveModal(true)
+    setSaving(true)
+    try {
+      const chatMsgs = messages.filter(m => m.role !== 'separator')
+      const res = await apiFetch('/summarize', {
+        method: 'POST',
+        body: JSON.stringify({ messages: chatMsgs })
+      })
+      const data = await res.json()
+      setAiTitle(data.title)
+      setAiSummary(data.summary)
+      setEditingSummary(data.summary)
+      setUserNotes('')
+      setShowSaveModal(true)
+    } catch (err: any) {
+      alert('总结失败：' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const confirmSave = async () => {
-    const selected = topicSummaries.filter(t => t.title !== undefined)
-    if (selected.length === 0) { alert('请至少选择一个题目'); return }
+    if (!aiTitle.trim()) { alert('请输入标题'); return }
     setSaving(true)
     try {
-      // 先保存完整对话
       const convRes = await apiFetch('/conversations', {
         method: 'POST',
         body: JSON.stringify({
-          title: selected[0].label,
+          title: aiTitle,
           messages
         })
       })
       const convData = await convRes.json()
 
-      // 为每个选中的题目生成总结
-      const topics = splitByTopics(messages)
-      for (let i = 0; i < topics.length; i++) {
-        const t = topicSummaries[i]
-        if (!t || t.title === '') continue
-        const chatMsgs = topics[i].msgs.filter(m => m.role !== 'separator')
-        if (chatMsgs.length === 0) continue
-
-        try {
-          const sumRes = await apiFetch('/summarize', {
-            method: 'POST',
-            body: JSON.stringify({ messages: chatMsgs })
-          })
-          const sumData = await sumRes.json()
-
-          await apiFetch('/knowledge', {
-            method: 'POST',
-            body: JSON.stringify({
-              conversation_id: convData.id,
-              title: t.title || sumData.title,
-              summary: sumData.summary,
-              user_notes: t.userNotes.trim() || null
-            })
-          })
-        } catch (err: any) {
-          console.error(`总结"${t.label}"失败:`, err)
-        }
-      }
+      await apiFetch('/knowledge', {
+        method: 'POST',
+        body: JSON.stringify({
+          conversation_id: convData.id,
+          title: aiTitle,
+          summary: editingSummary,
+          user_notes: userNotes.trim() || null
+        })
+      })
 
       setShowSaveModal(false)
       setMessages([])
-      setTopicCount(0)
-      alert(`已保存 ${selected.length} 个知识点！`)
+      alert('知识点已保存！')
     } catch (err: any) {
       alert('保存失败：' + err.message)
     } finally {
@@ -244,7 +216,7 @@ export default function ChatPage() {
       </div>
 
       {/* 输入区 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-3 flex-shrink-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex-shrink-0">
         <div className="flex flex-col sm:flex-row gap-2">
           <textarea
             className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -255,23 +227,16 @@ export default function ChatPage() {
             onKeyDown={handleKeyDown}
             disabled={loading}
           />
-          <div className="flex flex-row sm:flex-col gap-2">
+          <div className="flex flex-row gap-2">
             <button
-              className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               onClick={sendMessage}
               disabled={loading || !input.trim()}
             >
               发送
             </button>
             <button
-              className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-indigo-300 transition-colors whitespace-nowrap"
-              onClick={newTopic}
-              disabled={loading || messages.length === 0}
-            >
-              📋 新题目
-            </button>
-            <button
-              className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap"
               onClick={startSave}
               disabled={saving || messages.length === 0 || loading}
             >
@@ -281,67 +246,37 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* 多题目选择弹窗 */}
+      {/* 总结编辑弹窗 */}
       {showSaveModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">选择要总结的题目</h2>
-              <p className="text-sm text-gray-500 mb-4">勾选需要 AI 总结的题目，可为每个设置自定义标题</p>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">AI 总结</h2>
+              <p className="text-sm text-gray-500 mb-4">AI 已根据对话生成知识点，你可以编辑后保存</p>
 
-              <div className="space-y-3 mb-6">
-                {topicSummaries.map((t, i) => (
-                  <div key={i} className={`border rounded-xl p-3 transition-colors ${t.title === '' ? 'bg-gray-50 border-gray-200' : 'border-indigo-300 bg-indigo-50/30'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="mt-1 w-4 h-4 text-indigo-600 rounded focus:ring-indigo-400"
-                        checked={t.title !== ''}
-                        onChange={(e) => {
-                          const next = [...topicSummaries]
-                          if (e.target.checked) {
-                            next[i] = { ...t, title: t.label, userNotes: '' }
-                          } else {
-                            next[i] = { ...t, title: '', userNotes: '' }
-                          }
-                          setTopicSummaries(next)
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-700 truncate">{t.label}</span>
-                          <span className="text-xs text-gray-400">({splitByTopics(messages)[i]?.msgs.filter(m => m.role !== 'separator').length || 0} 条消息)</span>
-                        </div>
-                        {t.title !== '' && (
-                          <>
-                            <input
-                              className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm mb-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                              placeholder="自定义标题（可选）"
-                              value={t.title === t.label ? '' : t.title}
-                              onChange={(e) => {
-                                const next = [...topicSummaries]
-                                next[i] = { ...t, title: e.target.value || t.label }
-                                setTopicSummaries(next)
-                              }}
-                            />
-                            <textarea
-                              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-amber-400 bg-amber-50/30"
-                              rows={2}
-                              placeholder="我的笔记（可选）"
-                              value={t.userNotes}
-                              onChange={(e) => {
-                                const next = [...topicSummaries]
-                                next[i] = { ...t, userNotes: e.target.value }
-                                setTopicSummaries(next)
-                              }}
-                            />
-                          </>
-                        )}
-                      </div>
-                    </label>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+              <input
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                value={aiTitle}
+                onChange={(e) => setAiTitle(e.target.value)}
+              />
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">知识点总结</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y"
+                rows={10}
+                value={editingSummary}
+                onChange={(e) => setEditingSummary(e.target.value)}
+              />
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">我的笔记（可选）</label>
+              <textarea
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-6 focus:outline-none focus:ring-1 focus:ring-amber-400 bg-amber-50/30 resize-y"
+                rows={3}
+                placeholder="添加自己的笔记..."
+                value={userNotes}
+                onChange={(e) => setUserNotes(e.target.value)}
+              />
 
               <div className="flex gap-3 justify-end">
                 <button
@@ -355,7 +290,7 @@ export default function ChatPage() {
                   onClick={confirmSave}
                   disabled={saving}
                 >
-                  {saving ? '正在总结并保存...' : `确认保存 (${topicSummaries.filter(t => t.title !== '').length}个)`}
+                  {saving ? '保存中...' : '确认保存'}
                 </button>
               </div>
             </div>
