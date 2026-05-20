@@ -2,7 +2,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 
 export default function Layout() {
   return (
-    <div className="h-dvh bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-dvh bg-gray-50 flex flex-col">
       {/* 顶部导航 */}
       <header className="bg-indigo-600 text-white shadow-md flex-shrink-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-3 sm:px-4 h-14 gap-2">
