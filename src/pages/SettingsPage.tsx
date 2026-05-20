@@ -19,7 +19,7 @@ export default function SettingsPage() {
   }, [])
 
   return (
-    <div className="max-w-2xl mx-auto h-full overflow-y-auto">
+    <div className="max-w-2xl mx-auto h-full overflow-auto">
       <h2 className="text-lg font-bold text-gray-800 mb-4">设置</h2>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
