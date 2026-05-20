@@ -135,27 +135,29 @@ export default function KnowledgePage() {
 
   return (
     <div className="max-w-3xl mx-auto h-full overflow-y-auto">
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
-          className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm"
+          className="w-full sm:flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm"
           placeholder="搜索知识点..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
-          onClick={exportWord}
-          disabled={items.length === 0}
-        >
-          导出 Word
-        </button>
-        <button
-          className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 whitespace-nowrap"
-          onClick={exportPdf}
-          disabled={items.length === 0}
-        >
-          导出 PDF
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="flex-1 sm:flex-none px-3 py-2 bg-blue-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+            onClick={exportWord}
+            disabled={items.length === 0}
+          >
+            导出 Word
+          </button>
+          <button
+            className="flex-1 sm:flex-none px-3 py-2 bg-red-500 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 whitespace-nowrap"
+            onClick={exportPdf}
+            disabled={items.length === 0}
+          >
+            导出 PDF
+          </button>
+        </div>
       </div>
 
       <div className="text-sm text-gray-500 mb-4">
