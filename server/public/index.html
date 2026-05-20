@@ -13,8 +13,9 @@
   <body>
     <div id="root"></div>
     <script>
-      // 强制清除顽固的旧 Service Worker 缓存
-      if ('serviceWorker' in navigator) {
+      // 一次性清理旧 SW 缓存（只执行一次，之后放行 PWA）
+      if ('serviceWorker' in navigator && !localStorage.getItem('sw_clean_v2')) {
+        localStorage.setItem('sw_clean_v2', '1');
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           regs.forEach(function(reg) { reg.unregister(); });
         });
