@@ -193,7 +193,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] overflow-hidden">
       {/* 消息列表 */}
       <div ref={msgListRef} onScroll={handleScroll} className="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-gray-200 mb-2 p-4">
         {messages.length === 0 && !streamingContent ? (

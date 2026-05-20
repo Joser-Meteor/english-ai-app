@@ -2,8 +2,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 
 export default function Layout() {
   return (
-    <div className="h-dvh bg-gray-50 flex flex-col">
-      {/* 顶部导航 */}
+    <div className="min-h-dvh bg-gray-50 flex flex-col">
       <header className="bg-indigo-600 text-white shadow-md flex-shrink-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-3 sm:px-4 h-14 gap-2">
           <h1 className="text-base sm:text-lg font-bold whitespace-nowrap">英语AI助手</h1>
@@ -43,8 +42,7 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* 主内容 */}
-      <main className="flex-1 min-h-0 max-w-4xl mx-auto w-full px-4 pt-4 pb-0 flex flex-col">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-4 pb-4">
         <Outlet />
       </main>
     </div>
